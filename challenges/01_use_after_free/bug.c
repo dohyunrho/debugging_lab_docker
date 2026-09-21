@@ -102,7 +102,7 @@ static Widget *widget_new(const VTable *vt, int id, const char *label) {
 }
 
 static void widget_destroy(Widget *w) {
-    free(w);          
+    free(w);
 }
 
 /* ── Screen ──────────────────────────────────────────────────── */
@@ -112,22 +112,26 @@ static void screen_add(Screen *s, Widget *w) {
 
 static void screen_dispatch(Screen *s, int code) {
     for (int i = 0; i < s->count; i++) {
-        Widget *w = s->items[i];
-        w->vtbl->on_event(w, code);
+        if(s->items[i] != NULL){
+            Widget *w = s->items[i];
+            w->vtbl->on_event(w, code);
+        }
     }
 }
 
 static void screen_render(Screen *s) {
     for (int i = 0; i < s->count; i++) {
         Widget *w = s->items[i];
-        w->vtbl->render(w);      
+        if(w != NULL){
+        w->vtbl->render(w);
+        }        
     }
 }
 
 static void dialog_on_event(Widget *self, int code) {
     if (code == 1) {
         self->closed = 1;
-        widget_destroy(self);   
+        //widget_destroy(self);  
     }
 }
 
@@ -158,10 +162,16 @@ int main(void) {
     screen_dispatch(&s, 1);
 
     /* TODO 닫힌(closed) 위젯을 여기서 정리(free + 해당 슬롯 NULL)할 필요가 있음 */
-
+    for (int i=0; i < s.count; i++){
+        if(s.items[i]->closed == 1){
+            free(s.items[i]);
+            s.items[i] = NULL;
+        }
+    }
     char *status = app_build_status("dialog closed");
+    
     printf("%s\n", status);
-
+    
     printf("frame 2:\n");
     screen_render(&s);           
 
